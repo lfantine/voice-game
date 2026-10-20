@@ -68,7 +68,14 @@ impl canvas::Program<AppMessage> for GameCanvas<'_> {
             origin.x + (position.x as f32 + 0.5) * cell,
             origin.y + (position.y as f32 + 0.5) * cell,
         );
-        draw_character(&mut frame, center, cell, player.get_facing().angle());
+        match self.textures.player(player.get_facing()) {
+            Some(sprite) => {
+                let size = cell * 0.9;
+                let area = Rectangle::new(Point::new(center.x - size / 2.0, center.y - size / 2.0), Size::new(size, size));
+                frame.draw_image(area, Image::new(sprite.clone()).filter_method(FilterMethod::Nearest));
+            }
+            None => draw_character(&mut frame, center, cell, player.get_facing().angle()),
+        }
 
         vec![frame.into_geometry()]
     }
