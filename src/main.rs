@@ -1,5 +1,7 @@
 
 mod app;
+#[cfg(feature = "train")]
+mod train;
 mod voice;
 
 use std::println;
@@ -24,7 +26,12 @@ fn init_tracing(verbose: bool) {
 struct Args {
     /// Verbose toggle
     #[arg(short, long)]
-    verbose: Option<bool>
+    verbose: bool,
+
+    /// Train the voice model on the recorded examples instead of launching the game
+    #[cfg(feature = "train")]
+    #[arg(long)]
+    train: bool,
 }
 
 fn main() {
@@ -36,8 +43,17 @@ fn main() {
     }
 
     let args = Args::parse();
-    let verbose = args.verbose.unwrap_or(false);
-    init_tracing(verbose);
+    init_tracing(args.verbose);
+
+    #[cfg(feature = "train")]
+    {
+        if args.train {
+            if let Err(e) = train::run() {
+                println!("{}", format!("[Error]: {e}").red());
+            }
+            return;
+        }
+    }
 
     debug!("Welcome on the voice recognition game !");
 

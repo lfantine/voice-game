@@ -1,13 +1,25 @@
+[workspace]
+members = [".", "crates/*"]
+default-members = ["."]
+
 [package]
 name = "voice_recognition_game"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["train"]
+train = ["voice_model/train", "burn/train", "burn/autodiff", "burn/wgpu", "dep:hound"]
+
 [dependencies]
+voice_audio = { path = "crates/voice_audio" }
+voice_model = { path = "crates/voice_model" }
+burn = { version = "0.20.1", features = ["ndarray"] }
+hound = { version = "3.5.1", optional = true }
 clap = { version = "4.6.7", features = ["derive"] }
 colored = "3.1.1"
 dotenv = "0.15.0"
-iced = { version = "0.14.0", features = ["tokio", "canvas"] }
+iced = { version = "0.14.0", features = ["tokio", "canvas", "image", "advanced"] }
 tokio = { version = "1.53.3", features = ["full"] }
 tokio-stream = "0.1.19"
 tracing = "0.1.44"

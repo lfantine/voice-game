@@ -1,0 +1,11 @@
+[package]
+name = "voice_model"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+train = ["burn/train"]
+
+[dependencies]
+burn = "0.20.1"
+rustfft = "6"

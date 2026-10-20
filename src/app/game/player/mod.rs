@@ -1,36 +1,33 @@
-use super::math::Position;
+use super::math::{Direction, Position};
 
 #[derive(Debug)]
 pub struct Player {
     position: Position,
+    facing: Direction,
 }
 
 impl Player {
-    pub fn get_position(&self) -> &Position {
-        return &self.position;
-    }
-    
-    pub fn move_up(&mut self) {
-        self.position.y -= 1;
-    }
-
-    pub fn move_down(&mut self) {
-        self.position.y += 1;
-    }
-
-    pub fn move_left(&mut self) {
-        self.position.x -= 1;
-    }
-
-    pub fn move_right(&mut self) {
-        self.position.x += 1;
-    }
-}
-
-impl Default for Player {
-    fn default() -> Self {
+    /// A player on `position`, looking down
+    pub fn new(position: Position) -> Self {
         Self {
-            position: Position::default(),
+            position,
+            facing: Direction::Down,
         }
+    }
+
+    pub fn get_position(&self) -> Position {
+        self.position
+    }
+
+    pub fn get_facing(&self) -> Direction {
+        self.facing
+    }
+
+    pub fn face(&mut self, direction: Direction) {
+        self.facing = direction;
+    }
+
+    pub fn move_to(&mut self, position: Position) {
+        self.position = position;
     }
 }

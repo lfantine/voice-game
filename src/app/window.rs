@@ -7,6 +7,9 @@ pub enum AppPage {
     #[default]
     Menu,
     Game,
+    /// Record examples for the training
+    #[cfg(feature = "train")]
+    Record,
 }
 
 /// The Message the app can get ( for interaction )
@@ -22,6 +25,22 @@ pub enum AppMessage {
     Quit,
 
     Voice(voice::VoiceInput),
+
+    /// Go from the menu to the record page
+    #[cfg(feature = "train")]
+    OpenRecord,
+    /// Choose the label to record
+    #[cfg(feature = "train")]
+    SelectLabel(&'static str),
+    /// Click on Record : wait a bit so the click is not recorded, then `BeginRecording`
+    #[cfg(feature = "train")]
+    StartRecording,
+    /// The delay after the click is over, open the microphone and record one example
+    #[cfg(feature = "train")]
+    BeginRecording,
+    /// A recording ended, with the saved file name or the error
+    #[cfg(feature = "train")]
+    Recorded(Result<String, String>),
 }
 
 /// The state of the window
