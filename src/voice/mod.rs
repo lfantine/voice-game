@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
 use burn::backend::NdArray;
@@ -7,6 +8,9 @@ use tokio::sync::mpsc::{Sender, error::TrySendError};
 use tracing::{debug, error};
 use voice_audio::Microphone;
 use voice_model::{Command, Recognizer};
+
+/// Pas de la fenêtre glissante : le modèle est relancé toutes les 250 ms sur la dernière seconde
+const HOP_LEN: usize = voice_model::SAMPLE_RATE as usize / 4;
 
 /// Weights produced by `--train`, read by the game
 pub fn weights_path() -> PathBuf {
@@ -58,15 +62,26 @@ fn recognition(tx: Sender<VoiceInput>) {
         }
     };
 
+    // la dernière seconde d'audio, un mot à cheval sur deux secondes finit entier dans une des fenêtres
+    let mut window = VecDeque::with_capacity(voice_model::WINDOW_LEN);
+
     loop {
-        let chunk = match mic.next_chunk(voice_model::WINDOW_LEN) {
-            Ok(chunk) => chunk,
+        let hop = match mic.next_chunk(HOP_LEN) {
+            Ok(hop) => hop,
             Err(e) => {
                 error!("Microphone stopped: {e}");
                 break;
             }
         };
-        let Some(command) = recognizer.predict(&chunk) else {
+        window.extend(hop);
+        if window.len() > voice_model::WINDOW_LEN {
+            window.drain(..window.len() - voice_model::WINDOW_LEN);
+        }
+        if window.len() < voice_model::WINDOW_LEN {
+            continue;
+        }
+
+        let Some(command) = recognizer.predict(window.make_contiguous()) else {
             // rien reconnu, mais on vérifie quand même que iced écoute encore
             if tx.is_closed() {
                 break;
@@ -74,6 +89,8 @@ fn recognition(tx: Sender<VoiceInput>) {
             continue;
         };
         debug!("Recognized {command:?}");
+        // les fenêtres suivantes contiennent encore le mot, on repart de zéro pour ne pas l'envoyer plusieurs fois
+        window.clear();
 
         match tx.try_send(command.into()) {
             Ok(()) => {}
